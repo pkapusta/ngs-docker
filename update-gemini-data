@@ -1,0 +1,4 @@
+#!/bin/bash
+
+gemini update --dataonly --extra cadd_score
+gemini update --dataonly --extra gerp_bp

@@ -1,0 +1,101 @@
+---
+- hosts: localhost
+  connection: local
+
+  roles:
+    - role: nuada.dockerize
+      timezone: "Europe/Warsaw"
+
+  tasks:
+    - name: group omicron
+      group: name=omicron gid=1000
+
+    - name: default user
+      user: name=omicron uid=1000 group=omicron groups=sudo shell=/bin/bash
+
+    - name: ssh dir
+      file: path=/home/omicron/.ssh state=directory
+         owner=omicron group=omicron mode=0700
+
+    - name: allow omicron user to use passwordless sudo
+      copy: dest=/etc/sudoers.d/90-omicron content="omicron ALL=(ALL) NOPASSWD:ALL"
+        owner=root group=root mode=0440
+
+    - name: install packages
+      apt: name={{ item }}
+      with_items:
+        - bedtools
+        - bowtie2
+        - bsdmainutils
+        - build-essential
+        - bwa
+        - byobu
+        - curl
+        - fastqc
+        - git
+        - ipython
+        - lbzip2
+        - libgsl0ldbl
+        - ncbi-blast+
+        - openjdk-7-jre-headless
+        - python-dev
+        - python-pip
+        - samtools
+        - sqlite3
+        - trimmomatic
+        - unzip
+        - vcftools
+        - vim
+        - wget
+        - zlib1g-dev
+
+    - name: install cutadapt
+      pip: name={{ item }}
+      with_items:
+        - cutadapt
+        - data_hacks
+        - illuminate
+
+    - name: ea-utils install prerequisites
+      apt: name={{ item }}
+      with_items:
+        - libgsl0-dev
+        - subversion
+    
+    - name: ea-utils checkout source
+      subversion: repo=http://ea-utils.googlecode.com/svn/trunk/ dest=/tmp/ansible/ea-utils
+    
+    - name: ea-utils compile and install
+      shell: make && make install chdir=/tmp/ansible/ea-utils/clipper
+      notify:
+        - tmp cleanup
+
+    - name: install skewer
+      get_url: url=http://sourceforge.net/projects/skewer/files/Binaries/skewer-0.1.120-linux-x86_64/download
+        dest=/usr/bin/skewer owner=root group=root mode=0755
+    
+    - name: create temp dir
+      file: path=/tmp/ansible state=directory
+
+    # Install bcftools
+    - git: repo=git://github.com/samtools/htslib.git dest=/tmp/ansible/htslib accept_hostkey=yes
+    - git: repo=git://github.com/samtools/bcftools.git dest=/tmp/ansible/bcftools accept_hostkey=yes
+    - shell: make -j{{ ansible_processor_vcpus }} chdir=/tmp/ansible/htslib
+    - shell: make -j{{ ansible_processor_vcpus }} && mv bcftools /usr/bin chdir=/tmp/ansible/bcftools
+
+    # Install plink
+    - shell: wget "https://www.cog-genomics.org$(curl -s https://www.cog-genomics.org/plink2/ | grep -Eo '/static/bin/plink[0-9]{6}/plink_linux_x86_64.zip')" &&
+        unzip plink_linux_x86_64.zip && mv plink /usr/bin chdir=/tmp/ansible
+
+    # Install GEMINI
+    - get_url: url=https://raw.github.com/arq5x/gemini/master/gemini/scripts/gemini_install.py
+        dest=/tmp/ansible/gemini_install.py owner=root group=root mode=0755
+    - shell: python gemini_install.py --nodata /usr /usr/share/gemini chdir=/tmp/ansible
+    - lineinfile: "dest=/usr/share/gemini/gemini-config.yaml regexp='^annotation_dir: ' line='annotation_dir: /resources/gemini/data'"
+
+    # Install vt
+    - git: repo=git://github.com/atks/vt.git dest=/tmp/ansible/vt accept_hostkey=yes
+    - shell: make -j{{ ansible_processor_vcpus }} && mv vt /usr/bin chdir=/tmp/ansible/vt
+
+    - name: cleanup temp
+      file: path=/tmp/ansible state=absent
