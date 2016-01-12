@@ -36,11 +36,13 @@
         - ipython
         - lbzip2
         - libgsl0ldbl
+        - munge
         - ncbi-blast+
         - openjdk-7-jre-headless
         - python-dev
         - python-pip
         - samtools
+        - slurm-llnl
         - sqlite3
         - trimmomatic
         - unzip
@@ -96,6 +98,19 @@
     # Install vt
     - git: repo=git://github.com/atks/vt.git dest=/tmp/ansible/vt accept_hostkey=yes
     - shell: make -j{{ ansible_processor_vcpus }} && mv vt /usr/bin chdir=/tmp/ansible/vt
+
+    # Setup munge & slurm
+    - name: check munge key
+      stat: path=/etc/munge/munge.key
+      register: munge_key
+
+    - name: create munge key
+      command: /usr/sbin/create-munge-key
+      when: not munge_key.stat.exists
+
+    - name: configure slurm
+      template: src=/etc/ansible/slurm.conf.j2 dest=/etc/slurm-llnl/slurm.conf
+        owner=root group=root mode=0644
 
     - name: cleanup temp
       file: path=/tmp/ansible state=absent

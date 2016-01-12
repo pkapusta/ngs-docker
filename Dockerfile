@@ -19,6 +19,7 @@ RUN mkdir -p ${ANSIBLE_HOME}/roles/nuada.dockerize; \
 
 # Playbook
 ADD site.yml ${ANSIBLE_HOME}/site.yml
+ADD slurm.conf.j2 ${ANSIBLE_HOME}/slurm.conf.j2
 RUN ansible-playbook ${ANSIBLE_HOME}/site.yml
 
 ADD update-gemini-data /usr/bin/update-gemini-data
