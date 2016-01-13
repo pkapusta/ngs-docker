@@ -69,8 +69,6 @@
     
     - name: ea-utils compile and install
       shell: make && make install chdir=/tmp/ansible/ea-utils/clipper
-      notify:
-        - tmp cleanup
 
     - name: install skewer
       get_url: url=http://sourceforge.net/projects/skewer/files/Binaries/skewer-0.1.120-linux-x86_64/download
