@@ -106,6 +106,9 @@
       command: /usr/sbin/create-munge-key
       when: not munge_key.stat.exists
 
+    - name: fix munge defaults
+      lineinfile: dest=/etc/default/munge regexp=^OPTIONS= line=OPTIONS="--syslog"
+
     - name: configure slurm
       template: src=/etc/ansible/slurm.conf.j2 dest=/etc/slurm-llnl/slurm.conf
         owner=root group=root mode=0644
