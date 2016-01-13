@@ -90,12 +90,12 @@ This container assumes special layout of `/resources` directory for every refere
   `data_dir` must point to `/resources/snpEff/3.6`)
 
 ```
-/resources/software/snpEff-3.6/
+/resources/software/snpEff-3.6/*
 ```
 
 - SnpEff databases
 
 ```
-/resources/snpEff/3.6/GRCh37.75
-/resources/snpEff/3.6/hg19
+/resources/snpEff/3.6/GRCh37.75/*
+/resources/snpEff/3.6/hg19/*
 ```
