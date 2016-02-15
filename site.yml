@@ -71,7 +71,7 @@
       shell: make && make install chdir=/tmp/ansible/ea-utils/clipper
 
     - name: install skewer
-      get_url: url=http://sourceforge.net/projects/skewer/files/Binaries/skewer-0.1.120-linux-x86_64/download
+      get_url: url=http://sourceforge.net/projects/skewer/files/Binaries/skewer-0.2.0-linux-x86_64/download
         dest=/usr/bin/skewer owner=root group=root mode=0755
     
     - name: create temp dir
