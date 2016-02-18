@@ -39,6 +39,7 @@
         - munge
         - ncbi-blast+
         - openjdk-7-jre-headless
+        - picard-tools
         - python-dev
         - python-pip
         - samtools
