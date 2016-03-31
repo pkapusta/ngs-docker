@@ -2,11 +2,22 @@
 - hosts: localhost
   connection: local
 
+  vars:
+    cran_mirror: "http://r.meteo.uni.wroc.pl"
+    rstudio_version: 0.99.891
+
   roles:
     - role: nuada.dockerize
       timezone: "Europe/Warsaw"
 
   tasks:
+    - name: install Ubuntu CRAN key
+      apt_key: keyserver=keyserver.ubuntu.com id=E084DAB9
+
+    - name: setup CRAN apt repo
+      copy: dest=/etc/apt/sources.list.d/cran.list
+        content="deb {{ cran_mirror }}/bin/linux/ubuntu {{ ansible_lsb.codename }}/"
+
     - name: group omicron
       group: name=omicron gid=1000
 
@@ -51,6 +62,28 @@
         - vim
         - wget
         - zlib1g-dev
+        - gdebi-core
+        - openjdk-7-jdk
+        - plink
+        - psmisc
+        - python-pandas
+        - r-base
+        - r-base-dev
+        - r-cran-rjava
+
+    - name: install R dependecies from CRAN
+      command: /usr/bin/Rscript -e "if (! ('{{ item }}' %in% installed.packages()[,'Package'])) install.packages('{{ item }}', repo=c('{{ cran_mirror }}'))"
+      with_items:
+        - ggplot2
+        - lubridate
+        - plyr
+        - reshape2
+        - xlsx
+
+    - name: install printr
+      command: /usr/bin/Rscript -e "if (! ('{{ item }}' %in% installed.packages()[,'Package'])) install.packages('{{ item }}', repo=c('http://yihui.name/xran', '{{ cran_mirror }}'))"
+      with_items:
+        - printr
 
     - name: install cutadapt
       pip: name={{ item }}
@@ -97,6 +130,38 @@
     # Install vt
     - git: repo=git://github.com/atks/vt.git dest=/tmp/ansible/vt accept_hostkey=yes
     - shell: make -j{{ ansible_processor_vcpus }} && mv vt /usr/bin chdir=/tmp/ansible/vt
+
+    - name: download RStudio Server
+      get_url:
+        url="http://download2.rstudio.org/rstudio-server-{{ rstudio_version }}-amd64.deb"
+        dest="/tmp/ansible/rstudio-server-{{ rstudio_version }}-amd64.deb"
+
+    - name: install RStudio Server
+      apt: deb="/tmp/ansible/rstudio-server-{{ rstudio_version }}-amd64.deb"
+
+    - name: install king
+      shell: curl http://people.virginia.edu/~wc9c/KING/Linux-king.tar.gz | tar zx -C /usr/bin
+
+    - name: install EIGENSTAT
+      shell: curl https://codeload.github.com/DReichLab/EIG/tar.gz/master | tar zx -C /usr/bin --wildcards '*/bin/*' --strip-components=2
+
+    - name: install impute2
+      shell: curl https://mathgen.stats.ox.ac.uk/impute/impute_v2.3.2_x86_64_dynamic.tgz | tar zx -C /usr/bin --wildcards '*/impute2' --strip-components=1
+
+    - name: install gtool
+      shell: curl http://www.well.ox.ac.uk/~cfreeman/software/gwas/gtool_v0.7.5_x86_64_dynamic.tgz | tar zx -C /usr/bin gtool
+
+    - name: install snptest
+      shell: curl http://www.well.ox.ac.uk/~gav/resources/snptest_v2.5.1_linux_x86_64_dynamic.tgz | tar zx -C /usr/bin --wildcards '*/snptest*' --strip-components=1
+
+    - name: install qctool
+      shell: curl http://www.well.ox.ac.uk/~gav/qctool/resources/qctool_v1.4-linux-x86_64.tgz | tar zx -C /usr/bin --wildcards '*/qctool' --strip-components=1
+
+    - name: install beelinetools
+      shell: curl https://codeload.github.com/pgxcentre/beelinetools/tar.gz/0.2.2 | tar zx -C /usr/bin --wildcards '*/beelinetools.py' --strip-components=1
+
+    - name: install csvkit
+      pip: name=csvkit
 
     # Setup munge & slurm
     - name: check munge key

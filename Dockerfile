@@ -28,4 +28,9 @@ ENV HOME /home/omicron
 WORKDIR ${HOME}
 USER omicron
 
-CMD bash
+# Expose RStudio Server
+EXPOSE 8787
+
+# Run RStudio Server
+CMD ["/usr/lib/rstudio-server/bin/rserver", "--server-app-armor-enabled=0", "--server-daemonize=0"]
+
